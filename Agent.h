@@ -1,6 +1,14 @@
 ﻿#pragma once
 #include "raylib.h"
 
+enum class Direction
+{
+    UP,
+    DOWN,
+    LEFT,
+    RIGHT
+};
+
 class Agent
 {
 public:
@@ -10,4 +18,5 @@ public:
 
 private:
     Vector2 position;    // pozice agenta
+	Direction currentDirection; // aktuální směr pohybu
 };
