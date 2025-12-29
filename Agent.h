@@ -12,9 +12,10 @@ enum class Direction
 class Agent
 {
 public:
-    Agent(Vector2 pos);  // konstruktor s počáteční pozicí
-    void Update();       // logika agenta (zatím prázdná)
+    Agent(Vector2 pos, Direction direction);  // konstruktor s počáteční pozicí
+    void Update();       // logika agenta
     void Draw() const;   // vykreslení agenta
+    void Draw2() const;
 
 private:
     Vector2 position;    // pozice agenta

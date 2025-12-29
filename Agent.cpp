@@ -1,6 +1,6 @@
 ﻿#include "Agent.h"
 
-Agent::Agent(Vector2 pos) : position(pos), currentDirection(Direction::RIGHT) {}
+Agent::Agent(Vector2 pos, Direction direction) : position(pos), currentDirection(direction) {}
 
 void Agent::Update()
 {
@@ -31,4 +31,9 @@ void Agent::Update()
 void Agent::Draw() const
 {
 	DrawRectangleV(position, { 20, 20 }, BLUE); //blue square
+}
+
+void Agent::Draw2() const
+{
+    DrawRectangleV(position, { 20, 20 }, RED); //blue square
 }

@@ -10,4 +10,5 @@ public:
 
 private:
     Agent agent;     // prozatím jeden agent
+	Agent agent2;    // druhı agent
 };
