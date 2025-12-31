@@ -1,6 +1,6 @@
 ﻿#include "Game.h"
-#include "World.h"   // naše World třída
-#include "raylib.h"  // knihovna pro grafiku
+#include "World.h" 
+#include "raylib.h"
 
 void Game::Run()
 {

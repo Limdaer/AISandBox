@@ -8,7 +8,7 @@
 
 int main()
 {
-    Game game;   // Vytvoříme instanci hry
-    game.Run();  // Spustíme hlavní loop hry
+    Game game;
+    game.Run();
     return 0;
 }
