@@ -13,8 +13,7 @@ World::World()
 void World::Update()
 {
 	Vector2 targetPos = agent2.GetPosition(); // získání pozice druhého agenta
-    agent.Update(targetPos, *this); // update agenta
-    agent2.Update2(*this);   
+    agent.Update(targetPos, *this); // update agenta 
 }
 
 void World::Draw()

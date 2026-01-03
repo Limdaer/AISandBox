@@ -17,7 +17,6 @@ class Agent
 public:
     Agent(Vector2 pos, Direction direction, float speed);  // konstruktor s počáteční pozicí
     void Update(Vector2 targetPos, World &world);       // logika agenta
-	void Update2(World &world);
     void Draw() const;   // vykreslení agenta
     void Draw2() const;
 	Vector2 GetPosition() const { return position; } // getter pro pozici

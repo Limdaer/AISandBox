@@ -37,55 +37,6 @@ void Agent::Update(Vector2 targetPos, World &world)
     }
 }
 
-void Agent::Update2(World& world)
-{
-
-
-    std::vector<Direction> possibleDirections;
-    if (world.testRight(*this) && position.x + speed < 800 - size) possibleDirections.push_back(Direction::RIGHT);
-    if (world.testLeft(*this) && position.x - speed > 0 + size) possibleDirections.push_back(Direction::LEFT);
-    if (world.testUp(*this) && position.y - speed > 0 + size) possibleDirections.push_back(Direction::UP);
-    if (world.testDown(*this) && position.y + speed < 600 - size) possibleDirections.push_back(Direction::DOWN);
-    
-    bool lastIsPossible = std::find(possibleDirections.begin(), possibleDirections.end(), lastDirection) 
-        != possibleDirections.end(); if (!possibleDirections.empty() && changeDirectionTimer <= 0.0f || !lastIsPossible)
-    if (!possibleDirections.empty() && (changeDirectionTimer <= 0.0f || !lastIsPossible))
-    {
-        // choose new direction every time
-		if (possibleDirections.size() > 1)
-            possibleDirections.erase(
-                std::remove(possibleDirections.begin(), possibleDirections.end(), lastDirection),
-                possibleDirections.end()
-            );
-
-        int idx = GetRandomValue(0, possibleDirections.size() - 1);
-        currentDirection = possibleDirections[idx];
-        changeDirectionTimer = 1.0f;
-    }
-    else
-		currentDirection = lastDirection;
-    switch (currentDirection)
-    {
-    case Direction::RIGHT:
-		lastDirection = Direction::RIGHT;
-        position.x += speed;
-        break;
-    case Direction::LEFT:
-		lastDirection = Direction::LEFT;
-        position.x -= speed;
-        break;
-    case Direction::UP:
-		lastDirection = Direction::UP;
-        position.y -= speed;
-        break;
-    case Direction::DOWN:
-		lastDirection = Direction::DOWN;
-        position.y += speed;
-        break;
-    }
-	changeDirectionTimer -= GetFrameTime();
-}
-
 
 void Agent::Draw() const
 {
@@ -94,5 +45,5 @@ void Agent::Draw() const
 
 void Agent::Draw2() const
 {
-    DrawRectangleV(position, { size,size }, RED); //blue square
+    DrawRectangleV(position, { size,size }, RED); //red square
 }
