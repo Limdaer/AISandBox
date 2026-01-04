@@ -9,7 +9,8 @@ enum class Direction
     UP,
     DOWN,
     LEFT,
-    RIGHT
+    RIGHT,
+    NONE
 };
 
 enum class AgentState

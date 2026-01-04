@@ -57,6 +57,9 @@ void Agent::Seek(World& world, Vector2 targetPos)
 
 void Agent::FSM(World& world, Vector2 targetPos)
 {
+    // rozdíl k cíli
+    float dx = targetPos.x - position.x;
+    float dy = targetPos.y - position.y;
     switch (currentState)
     {
         case AgentState::Idle:
@@ -72,32 +75,28 @@ void Agent::FSM(World& world, Vector2 targetPos)
             bool canMoveDown = world.testDown(*this);
             bool moved = false;
 
-            // rozdíl k cíli
-            float dx = targetPos.x - position.x;
-            float dy = targetPos.y - position.y;
-
             // pohyb po X ose
-            if (dx > 0 && canMoveRight) {
+            if (dx > 0 && canMoveRight && lastDirection != Direction::LEFT) {
                 position.x += speed;
                 moved = true;
 				lastDirection = Direction::RIGHT;
             }
-            else if (dy > 0 && canMoveDown) {
-                position.y += speed;
-                moved = true;
-				lastDirection = Direction::DOWN;
-            }
-            else if (dx < 0 && canMoveLeft) {
+            else if (dx < 0 && canMoveLeft && lastDirection != Direction::RIGHT) {
                 position.x -= speed;
                 moved = true;
 				lastDirection = Direction::LEFT;
             }
-            else if (dy < 0 && canMoveUp) {
+            else if (dy < 0 && canMoveUp && lastDirection != Direction::DOWN) {
                 position.y -= speed;
                 moved = true;
 				lastDirection = Direction::UP;
             }
-            if (moved == false)
+            else if (dy > 0 && canMoveDown && lastDirection != Direction::UP) {
+                position.y += speed;
+                moved = true;
+				lastDirection = Direction::DOWN;
+            }
+            if (!moved)
             {
                 currentState = AgentState::Avoid;
                 if(dx > 0 && !canMoveRight)
@@ -123,53 +122,84 @@ void Agent::FSM(World& world, Vector2 targetPos)
             {
             case Direction::RIGHT:
             {
-                if (canUp)
+                if (canUp) {
                     position.y -= speed;
-                else if (canLeft)
+					lastDirection = Direction::UP;
+                }
+                else if (canLeft) {
                     position.x -= speed;
-                else if (canDown)
+					lastDirection = Direction::LEFT;
+                    desiredDirection = Direction::LEFT;
+                }
+                else if (canDown) {
                     position.y += speed;
+					lastDirection = Direction::DOWN;
+                    desiredDirection = Direction::DOWN;
+                }
                 break;
             }
             case Direction::LEFT:
             {
-                if (canDown)
+                if (canDown) {
                     position.y += speed;
-                else if (canRight)
+                    lastDirection = Direction::DOWN;
+                }
+                else if (canRight) {
                     position.x += speed;
-                else if (canUp)
+					lastDirection = Direction::RIGHT;
+                    desiredDirection = Direction::RIGHT;
+                }
+                else if (canUp) {
                     position.y -= speed;
-                break;
+                    lastDirection = Direction::UP;
+                    desiredDirection = Direction::UP;
+                }
             }
             case Direction::UP:
             {
-                if (canLeft)
+                if (canLeft) {
                     position.x -= speed;
-                else if (canDown)
+                    lastDirection = Direction::LEFT;
+                }
+                else if (canDown) {
                     position.y += speed;
-                else if (canRight)
+                    lastDirection = Direction::DOWN;
+                    desiredDirection = Direction::DOWN;
+                }
+                else if (canRight) {
                     position.x += speed;
+                    lastDirection = Direction::RIGHT;
+                    desiredDirection = Direction::RIGHT;
+                }
                 break;
             }
             case Direction::DOWN:
             {
-                if (canRight)
+                if (canRight) {
                     position.x += speed;
-                else if (canUp)
+                    lastDirection = Direction::RIGHT;
+                }
+                else if (canUp) {
                     position.y -= speed;
-                else if (canLeft)
+                    lastDirection = Direction::UP;
+                    desiredDirection = Direction::UP;
+                }
+                else if (canLeft) {
                     position.x -= speed;
+                    lastDirection = Direction::LEFT;
+                    desiredDirection = Direction::LEFT;
+                }
                 break;
             }
             }
-            if(desiredDirection == Direction::RIGHT && canRight)
+            if (desiredDirection == Direction::RIGHT && canRight && dx > 0)
                 currentState = AgentState::Seek;
-            else if(desiredDirection == Direction::LEFT && canLeft)
+            else if (desiredDirection == Direction::LEFT && canLeft && dx < 0)
                 currentState = AgentState::Seek;
-            else if(desiredDirection == Direction::UP && canUp)
+            else if (desiredDirection == Direction::UP && canUp && dy < 0)
                 currentState = AgentState::Seek;
-            else if(desiredDirection == Direction::DOWN && canDown)
-				currentState = AgentState::Seek;
+            else if (desiredDirection == Direction::DOWN && canDown && dy > 0)
+                currentState = AgentState::Seek;
         }
     }
 }
