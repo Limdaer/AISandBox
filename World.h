@@ -24,6 +24,8 @@ public:
 	bool testLeft(const Agent& agent) const;
 	bool testUp(const Agent& agent) const;
 	bool testDown(const Agent& agent) const;
+	bool testCollisionAgents(const Agent& agent1, const Agent& agent2) const;
+	Vector2 GetRandomFreePosition(float agentSize);
 
 private:
     Agent agent;     // prozatím jeden agent
