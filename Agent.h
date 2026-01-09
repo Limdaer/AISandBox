@@ -1,6 +1,10 @@
 ﻿#pragma once
 #include "raylib.h"
 #include "math.h"
+#include <vector>
+#include <queue>
+#include <unordered_map>
+#include <algorithm>
 
 class World; // forward declaration
 
@@ -27,6 +31,7 @@ public:
     void Update(Vector2 targetPos, World &world);       // logika agenta
 	void Seek(World& world, Vector2 targetPos);
 	void FSM(World& world, Vector2 targetPos); // konečný automat pro chování agenta
+    void BFS(World& world, Vector2 targetPos);
     void Draw() const;   // vykreslení agenta
     void Draw2() const;
 	Vector2 GetPosition() const { return position; } // getter pro pozici
@@ -43,4 +48,10 @@ private:
     Direction lastDirection;
 	AgentState currentState;
 	float changeDirectionTimer = 0.0f;
+    Vector2 startAvoiding;
+    bool first;
+    std::vector<Vector2> path; 
+    size_t pathIndex = 0;     
+    Vector2 lastTarget;   
+
 };

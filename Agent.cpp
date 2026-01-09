@@ -4,7 +4,7 @@
 
 Agent::Agent(Vector2 pos, Direction direction, float speed) : position(pos), currentDirection(direction), 
 targetPosition({ 0,0 }), speed(speed), size(20), lastDirection(direction), changeDirectionTimer(0.0f),
-currentState(AgentState::Seek), desiredDirection(Direction::RIGHT)
+currentState(AgentState::Seek), desiredDirection(Direction::RIGHT), startAvoiding({ 0,0 }), first(false)
 {}
 
 void Agent::Update(Vector2 targetPos, World &world)
@@ -12,7 +12,8 @@ void Agent::Update(Vector2 targetPos, World &world)
 	// Bug pokud je agent locknuty na target ktery je za zdi, tak se snazi furt dostat k nemu a neumi se vyhnout
 	targetPosition = targetPos;
 	//Seek(world, targetPosition);  // volání seek metody pro pohyb k cíli
-	FSM(world, targetPosition); // volání FSM pro chování agenta
+	//FSM(world, targetPosition); // volání FSM pro chování agenta
+	BFS(world, targetPosition);
 
 }
 
@@ -107,6 +108,7 @@ void Agent::FSM(World& world, Vector2 targetPos)
                     desiredDirection = Direction::DOWN;
                 else if (dy < 0 && !canMoveUp)
 					desiredDirection = Direction::UP;
+
             }
             break;
         }
@@ -200,6 +202,39 @@ void Agent::FSM(World& world, Vector2 targetPos)
                 currentState = AgentState::Seek;
             else if (desiredDirection == Direction::DOWN && canDown && dy > 0)
                 currentState = AgentState::Seek;
+            else if(position.x > 790 || position.x < 10 || position.y > 590 || position.y < 10)
+				currentState = AgentState::Seek;
         }
     }
 }
+
+void Agent::BFS(World& world, Vector2 targetPos) {
+    // Pokud se target změnil nebo cesta neexistuje, spočítáme novou
+    if (path.empty() || targetPos.x != lastTarget.x || targetPos.y != lastTarget.y)
+    {
+        path = world.FindPathBFS(position, targetPos); // BFS vrací cestu po světových souřadnicích
+        pathIndex = 0;
+        lastTarget = targetPos;
+    }
+
+    // Pohyb po cestě
+    if (pathIndex < path.size())
+    {
+        Vector2 next = path[pathIndex];
+        Vector2 dir = { next.x - position.x, next.y - position.y };
+        float length = sqrt(dir.x * dir.x + dir.y * dir.y);
+        if (length > 0)
+        {
+            dir.x /= length;
+            dir.y /= length;
+
+            position.x += dir.x * speed;
+            position.y += dir.y * speed;
+        }
+
+        // Pokud jsme dost blízko, jdeme na další bod
+        if (fabs(position.x - next.x) < 1.0f && fabs(position.y - next.y) < 1.0f)
+            pathIndex++;
+    }
+}
+

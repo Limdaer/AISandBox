@@ -2,6 +2,13 @@
 #include "Agent.h"
 #include <vector>
 
+const int CELL_SIZE = 20;
+
+struct gridPos{
+	int x;
+	int y;
+};
+
 class Wall
 {
 public:
@@ -25,7 +32,12 @@ public:
 	bool testUp(const Agent& agent) const;
 	bool testDown(const Agent& agent) const;
 	bool testCollisionAgents(const Agent& agent1, const Agent& agent2) const;
-	Vector2 GetRandomFreePosition(float agentSize);
+	bool IsCellWalkable(int gridX, int gridY) const;
+	Vector2 ToWorldPosition(gridPos gPos) const;
+	Vector2 GetRandomFreePosition();
+	gridPos ToGridPosition(Vector2 position) const;
+	std::vector<Vector2> FindPathBFS(Vector2 start, Vector2 goal) const;
+
 
 private:
     Agent agent;     // prozatím jeden agent
