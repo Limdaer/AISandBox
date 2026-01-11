@@ -4,7 +4,8 @@
 
 Agent::Agent(Vector2 pos, Direction direction, float speed) : position(pos), currentDirection(direction), 
 targetPosition({ 0,0 }), speed(speed), size(20), lastDirection(direction), changeDirectionTimer(0.0f),
-currentState(AgentState::Seek), desiredDirection(Direction::RIGHT), startAvoiding({ 0,0 }), first(false)
+currentState(AgentState::Seek), desiredDirection(Direction::RIGHT), startAvoiding({ 0,0 }), first(false),
+lastTarget({ -1,-1 }), pathIndex(0)
 {}
 
 void Agent::Update(Vector2 targetPos, World &world)
@@ -25,7 +26,7 @@ void Agent::Draw() const
 
 void Agent::Draw2() const
 {
-    DrawRectangleV(position, { size,size }, RED); //red square
+    DrawRectangleV(position, { size,size }, GREEN); //green square
 }
 
 void Agent::Seek(World& world, Vector2 targetPos)
@@ -236,5 +237,68 @@ void Agent::BFS(World& world, Vector2 targetPos) {
         if (fabs(position.x - next.x) < 1.0f && fabs(position.y - next.y) < 1.0f)
             pathIndex++;
     }
+}
+
+EnemyAgent::EnemyAgent(Vector2 pos, float speed, Direction direction, float timer) : position(pos),
+targetPosition(pos), speed(speed), currentDirection(direction), size(20), changeDirectionTimerDefault(timer), changeDirectionTimer(timer)
+{
+
+}
+
+void EnemyAgent::Update(World& world)
+{
+    Agent temp(position, currentDirection, speed);
+    if(changeDirectionTimer > 0.0f)
+    {
+        changeDirectionTimer -= 1.0f; // Předpokládáme, že Update je voláno 60x za sekundu
+        if(currentDirection == Direction::UP)
+        {
+            if(world.testUp(temp) && position.y > 20)
+                position.y -= speed;
+            else
+				changeDirectionTimer = 0.0f;
+        }
+        else if(currentDirection == Direction::DOWN)
+        {
+            if(world.testDown(temp) && position.y < 580)
+                position.y += speed;
+			else
+				changeDirectionTimer = 0.0f;
+        }
+        else if(currentDirection == Direction::LEFT)
+        {
+            if(world.testLeft(temp) && position.x > 20)
+                position.x -= speed;
+            else
+				changeDirectionTimer = 0.0f;
+        }
+        else if(currentDirection == Direction::RIGHT)
+        {
+            if(world.testRight(temp) && position.x < 780)
+                position.x += speed;
+            else
+				changeDirectionTimer = 0.0f;
+		}
+    }
+    else
+    {
+        if(currentDirection == Direction::UP)
+			currentDirection = Direction::DOWN;
+		else if (currentDirection == Direction::DOWN)
+            currentDirection = Direction::UP;
+        else if (currentDirection == Direction::LEFT)
+            currentDirection = Direction::RIGHT;
+        else if (currentDirection == Direction::RIGHT)
+            currentDirection = Direction::LEFT;
+		changeDirectionTimer = changeDirectionTimerDefault;
+	}
+}
+
+
+
+
+void EnemyAgent::Draw() const
+{
+    DrawRectangleV(position, { size, size }, RED);
 }
 

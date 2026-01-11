@@ -55,3 +55,22 @@ private:
     Vector2 lastTarget;   
 
 };
+
+class EnemyAgent {
+public:
+    EnemyAgent(Vector2 pos, float speed, Direction direction, float timer);  // konstruktor s počáteční pozicí
+    void Update(World &world);       // logika agenta
+    void Draw() const;   // vykreslení agenta
+    Vector2 GetPosition() const { return position; } // getter pro pozici
+    float GetSpeed() const { return speed; } // getter pro rychlost
+	float GetSize() const { return size; } // getter pro velikost
+
+private:
+	Vector2 position;    // pozice agenta
+	Direction currentDirection; // aktuální směr pohybu
+    Vector2 targetPosition; // cílová pozice
+    float size;
+	float speed;
+	float changeDirectionTimer = 0.0f;
+    float changeDirectionTimerDefault;
+};

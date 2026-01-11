@@ -43,4 +43,5 @@ private:
     Agent agent;     // prozatím jeden agent
 	Agent agent2;    // druhı agent
     std::vector<Wall> walls;
+	std::vector<EnemyAgent> enemies;
 };

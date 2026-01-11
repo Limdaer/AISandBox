@@ -6,6 +6,17 @@ World::World()
     : agent({ 100, 100 }, Direction::RIGHT, 4.0f),
     agent2({ 700, 500 }, Direction::LEFT, 5.0f)
 {
+    //enemies
+    enemies.emplace_back(
+        EnemyAgent({ 100, 100 }, 2.0f, Direction::RIGHT, 200.0f)
+    );
+    enemies.emplace_back(
+        EnemyAgent({ 500, 200 }, 2.5f, Direction::UP, 200.0f)
+    );
+    enemies.emplace_back(
+        EnemyAgent({ 200, 500 }, 3.0f, Direction::LEFT, 200.0f)
+    );
+
     // horizontální zdi (x, y, width, height) -- vše násobek CELL_SIZE
     walls.emplace_back(Vector2{ 300, 200 }, Vector2{ 200, 20 }); // 10x1 buněk
     walls.emplace_back(Vector2{ 500, 340 }, Vector2{ 140, 20 }); // 7x1 buněk
@@ -38,6 +49,10 @@ void World::Update()
 {
 	Vector2 targetPos = agent2.GetPosition(); // získání pozice druhého agenta
     agent.Update(targetPos, *this); // update agenta 
+    for (auto& enemy : enemies)
+    {
+		enemy.Update(*this);
+    }
     bool collision = false;
 	collision = testCollisionAgents(agent, agent2);
     if (collision) {
@@ -54,6 +69,10 @@ void World::Draw()
     {
         wall.Draw();
     }
+    for(const EnemyAgent& enemy : enemies)
+    {
+        enemy.Draw();
+	}
 }
 
 bool World::testRight(const Agent& agent) const
