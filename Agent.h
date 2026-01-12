@@ -37,6 +37,9 @@ public:
 	Vector2 GetPosition() const { return position; } // getter pro pozici
 	float GetSpeed() const { return speed; } // getter pro rychlost
 	float GetSize() const { return size; } // getter pro velikost
+	bool isEnemyNear(const Vector2& enemyPos, float detectionRadius) const;
+	void SetEnemiesNear(const std::vector<Vector2>& enemies) { closeEnemies = enemies; }
+    bool IsPositionSafe(const Vector2& pos) const;
 
 private:
     Vector2 position;    // pozice agenta
@@ -53,6 +56,7 @@ private:
     std::vector<Vector2> path; 
     size_t pathIndex = 0;     
     Vector2 lastTarget;   
+    std::vector<Vector2> closeEnemies;
 
 };
 

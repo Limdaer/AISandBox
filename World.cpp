@@ -8,14 +8,27 @@ World::World()
 {
     //enemies
     enemies.emplace_back(
-        EnemyAgent({ 100, 100 }, 2.0f, Direction::RIGHT, 200.0f)
+        EnemyAgent({ 100, 200 }, 3.0f, Direction::RIGHT, 200.0f)
     );
     enemies.emplace_back(
-        EnemyAgent({ 500, 200 }, 2.5f, Direction::UP, 200.0f)
+        EnemyAgent({ 500, 200 }, 3.0f, Direction::UP, 200.0f)
     );
     enemies.emplace_back(
         EnemyAgent({ 200, 500 }, 3.0f, Direction::LEFT, 200.0f)
     );
+    enemies.emplace_back(
+        EnemyAgent({ 720, 100 }, 3.0f, Direction::DOWN, 200.0f)
+    );
+    enemies.emplace_back(
+        EnemyAgent({ 300, 400 }, 3.0f, Direction::LEFT, 200.0f)
+    );
+    enemies.emplace_back(
+        EnemyAgent({ 680, 300 }, 3.0f, Direction::UP, 200.0f)
+    );
+    enemies.emplace_back(
+        EnemyAgent({ 150, 350 }, 3.0f, Direction::RIGHT, 200.0f)
+    );
+
 
     // horizontální zdi (x, y, width, height) -- vše násobek CELL_SIZE
     walls.emplace_back(Vector2{ 300, 200 }, Vector2{ 200, 20 }); // 10x1 buněk
@@ -48,6 +61,15 @@ World::World()
 void World::Update()
 {
 	Vector2 targetPos = agent2.GetPosition(); // získání pozice druhého agenta
+    std::vector<Vector2> closeEnemies = {};
+    for (auto& enemy : enemies)
+    {
+        if (agent.isEnemyNear(enemy.GetPosition(), 60.0f)) {
+            closeEnemies.push_back(enemy.GetPosition());
+        }
+    }
+	agent.SetEnemiesNear(closeEnemies);
+    
     agent.Update(targetPos, *this); // update agenta 
     for (auto& enemy : enemies)
     {
@@ -186,8 +208,8 @@ Vector2 World::ToWorldPosition(gridPos gPos) const
 
 bool World::IsCellWalkable(int gridX, int gridY) const
 {
+    // nejdřív kontrola zdí
     Rectangle cellRect = { gridX * CELL_SIZE, gridY * CELL_SIZE, (float)CELL_SIZE, (float)CELL_SIZE };
-
     for (const Wall& wall : walls)
     {
         Rectangle wallRect = { wall.GetPosition().x, wall.GetPosition().y,
@@ -196,8 +218,27 @@ bool World::IsCellWalkable(int gridX, int gridY) const
             return false;
     }
 
-    return true;
+    // kontrola enemy agentů jako "neviditelná zeď"
+    for (const EnemyAgent& enemy : enemies)
+    {
+        Vector2 ePos = enemy.GetPosition();
+        gridPos enemyGrid = ToGridPosition(ePos);
+
+        // rozsah 3x3 kolem nepřítele
+        for (int dx = -1; dx <= 1; ++dx)
+        {
+            for (int dy = -1; dy <= 1; ++dy)
+            {
+                if (gridX == enemyGrid.x + dx && gridY == enemyGrid.y + dy)
+                    return false; // buňka je blokována nepřítelem
+            }
+        }
+    }
+
+    return true; // buňka je volná
 }
+
+
 
 std::vector<Vector2> World::FindPathBFS(Vector2 start, Vector2 goal) const
 {

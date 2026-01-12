@@ -6,7 +6,9 @@ Agent::Agent(Vector2 pos, Direction direction, float speed) : position(pos), cur
 targetPosition({ 0,0 }), speed(speed), size(20), lastDirection(direction), changeDirectionTimer(0.0f),
 currentState(AgentState::Seek), desiredDirection(Direction::RIGHT), startAvoiding({ 0,0 }), first(false),
 lastTarget({ -1,-1 }), pathIndex(0)
-{}
+{
+    path = {};
+}
 
 void Agent::Update(Vector2 targetPos, World &world)
 {
@@ -157,6 +159,7 @@ void Agent::FSM(World& world, Vector2 targetPos)
                     lastDirection = Direction::UP;
                     desiredDirection = Direction::UP;
                 }
+                break;
             }
             case Direction::UP:
             {
@@ -209,35 +212,156 @@ void Agent::FSM(World& world, Vector2 targetPos)
     }
 }
 
-void Agent::BFS(World& world, Vector2 targetPos) {
-    // Pokud se target změnil nebo cesta neexistuje, spočítáme novou
-    if (path.empty() || targetPos.x != lastTarget.x || targetPos.y != lastTarget.y)
+void Agent::BFS(World& world, Vector2 targetPos)
+{
+    bool needRepath = false;
+
+    // 1️⃣ žádná cesta
+    if (path.empty())
+        needRepath = true;
+
+    // 2️⃣ změna cíle
+    if (targetPos.x != lastTarget.x || targetPos.y != lastTarget.y)
+        needRepath = true;
+
+    // 3️⃣ zkontrolovat, jestli další bod path není nyní zablokovaný
+    if (!needRepath && pathIndex < path.size())
     {
-        path = world.FindPathBFS(position, targetPos); // BFS vrací cestu po světových souřadnicích
+        Vector2 next = path[pathIndex];
+        gridPos nextGrid = world.ToGridPosition(next);
+        if (!world.IsCellWalkable(nextGrid.x, nextGrid.y))
+            needRepath = true;
+    }
+
+    // 4️⃣ enemy blízko → zkontroluj další krok
+    if (!needRepath && !closeEnemies.empty() && pathIndex < path.size())
+    {
+        Vector2 next = path[pathIndex];
+        for (const Vector2& enemyPos : closeEnemies)
+        {
+            float distToEnemy = sqrt((enemyPos.x - next.x) * (enemyPos.x - next.x) +
+                (enemyPos.y - next.y) * (enemyPos.y - next.y));
+            if (distToEnemy < 40.0f)
+            {
+                needRepath = true;
+                break;
+            }
+        }
+    }
+
+    // === přepočítání cesty, pokud je potřeba ===
+    if (needRepath)
+    {
+        // pokud je cílová pozice zablokovaná, najdi nejbližší volnou buňku
+        gridPos goalG = world.ToGridPosition(targetPos);
+        if (!world.IsCellWalkable(goalG.x, goalG.y))
+        {
+            // jednoduchý posun na nejbližší volnou buňku (1 krok ve čtyřech směrech)
+            const int dx[4] = { 0, 0, -1, 1 };
+            const int dy[4] = { -1, 1, 0, 0 };
+            bool found = false;
+            for (int i = 0; i < 4 && !found; ++i)
+            {
+                gridPos n = { goalG.x + dx[i], goalG.y + dy[i] };
+                if (world.IsCellWalkable(n.x, n.y))
+                {
+                    targetPos = world.ToWorldPosition(n);
+                    found = true;
+                }
+            }
+            if (!found)
+            {
+                targetPos = position; // fallback - zůstaň na místě
+            }
+        }
+
+        path = world.FindPathBFS(position, targetPos);
         pathIndex = 0;
         lastTarget = targetPos;
     }
 
-    // Pohyb po cestě
+    // === pohyb po cestě ===
     if (pathIndex < path.size())
     {
         Vector2 next = path[pathIndex];
-        Vector2 dir = { next.x - position.x, next.y - position.y };
-        float length = sqrt(dir.x * dir.x + dir.y * dir.y);
-        if (length > 0)
-        {
-            dir.x /= length;
-            dir.y /= length;
+        Vector2 moveDir = { next.x - position.x, next.y - position.y };
+        float length = sqrt(moveDir.x * moveDir.x + moveDir.y * moveDir.y);
 
-            position.x += dir.x * speed;
-            position.y += dir.y * speed;
+        if (length > 0.01f)
+        {
+            moveDir.x /= length;
+            moveDir.y /= length;
+
+            // ✅ lokální vyhnutí enemy
+            for (const Vector2& enemyPos : closeEnemies)
+            {
+                Vector2 toEnemy = { enemyPos.x - position.x, enemyPos.y - position.y };
+                float dist = sqrt(toEnemy.x * toEnemy.x + toEnemy.y * toEnemy.y);
+
+                if (dist < 40.0f && dist > 0.01f)
+                {
+                    toEnemy.x /= dist;
+                    toEnemy.y /= dist;
+                    moveDir.x -= toEnemy.x;
+                    moveDir.y -= toEnemy.y;
+
+                    // normalizace
+                    float len = sqrt(moveDir.x * moveDir.x + moveDir.y * moveDir.y);
+                    if (len > 0.01f)
+                    {
+                        moveDir.x /= len;
+                        moveDir.y /= len;
+                    }
+                    break; // zpracujeme jen první blízký enemy
+                }
+            }
+
+            position.x += moveDir.x * speed;
+            position.y += moveDir.y * speed;
         }
 
-        // Pokud jsme dost blízko, jdeme na další bod
-        if (fabs(position.x - next.x) < 1.0f && fabs(position.y - next.y) < 1.0f)
+        // pokud jsme dost blízko, jdeme na další bod
+        float distanceToNext = sqrt((position.x - next.x) * (position.x - next.x) +
+            (position.y - next.y) * (position.y - next.y));
+
+        if (distanceToNext < speed * 0.9f) // trochu menší, aby nedošlo k zaseknutí
+        {
             pathIndex++;
+        }
+
+        // nevymazávej closeEnemies příliš brzy!
+        // closeEnemies.clear(); -> přesunout až po Update()
     }
 }
+
+
+
+
+
+bool Agent::isEnemyNear(const Vector2& enemyPos, float detectionRadius) const
+{
+    float dx = enemyPos.x - position.x;
+    float dy = enemyPos.y - position.y;
+    float distanceSquared = dx * dx + dy * dy;
+    return distanceSquared <= detectionRadius * detectionRadius;
+}
+
+bool Agent::IsPositionSafe(const Vector2& pos) const
+{
+    const float dangerRadius = 60.0f; // musí být <= tomu co dáváš do isEnemyNear
+
+    for (const auto& enemyPos : closeEnemies)
+    {
+        float dx = pos.x - enemyPos.x;
+        float dy = pos.y - enemyPos.y;
+        float dist = sqrt(dx * dx + dy * dy);
+
+        if (dist < dangerRadius)
+            return false;
+    }
+    return true;
+}
+
 
 EnemyAgent::EnemyAgent(Vector2 pos, float speed, Direction direction, float timer) : position(pos),
 targetPosition(pos), speed(speed), currentDirection(direction), size(20), changeDirectionTimerDefault(timer), changeDirectionTimer(timer)
