@@ -295,24 +295,39 @@ void Agent::BFS(World& world, Vector2 targetPos)
             // ✅ lokální vyhnutí enemy
             for (const Vector2& enemyPos : closeEnemies)
             {
-                Vector2 toEnemy = { enemyPos.x - position.x, enemyPos.y - position.y };
-                float dist = sqrt(toEnemy.x * toEnemy.x + toEnemy.y * toEnemy.y);
+                float dx = position.x - enemyPos.x;
+                float dy = position.y - enemyPos.y;
+                float distSq = dx * dx + dy * dy;
 
-                if (dist < 40.0f && dist > 0.01f)
+                if (distSq < 40.0f * 40.0f)
                 {
-                    toEnemy.x /= dist;
-                    toEnemy.y /= dist;
-                    moveDir.x -= toEnemy.x;
-                    moveDir.y -= toEnemy.y;
-
-                    // normalizace
-                    float len = sqrt(moveDir.x * moveDir.x + moveDir.y * moveDir.y);
-                    if (len > 0.01f)
+                    // určíme primární směr úniku
+                    if (fabs(dx) < fabs(dy))
                     {
-                        moveDir.x /= len;
-                        moveDir.y /= len;
+                        // chceme jít horizontálně
+                        if (dx > 0 && world.testRight(*this))
+                        {
+                            moveDir = { speed, 0 };
+                        }
+                        else if (dx < 0 && world.testLeft(*this))
+                        {
+                            moveDir = { -speed, 0 };
+                        }
                     }
-                    break; // zpracujeme jen první blízký enemy
+                    else
+                    {
+                        // chceme jít vertikálně
+                        if (dy > 0 && world.testDown(*this))
+                        {
+                            moveDir = { 0, speed };
+                        }
+                        else if (dy < 0 && world.testUp(*this))
+                        {
+                            moveDir = { 0, -speed };
+                        }
+                    }
+
+                    break; // vyhneme se jen jednomu enemy
                 }
             }
 
@@ -328,9 +343,6 @@ void Agent::BFS(World& world, Vector2 targetPos)
         {
             pathIndex++;
         }
-
-        // nevymazávej closeEnemies příliš brzy!
-        // closeEnemies.clear(); -> přesunout až po Update()
     }
 }
 
